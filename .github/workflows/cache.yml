@@ -16,6 +16,9 @@ jobs:
         - name: nixpkgs-unstable (Linux)
           channel: nixpkgs-unstable
           os: ubuntu-latest
+        - name: nixpkgs-unstable (macOS)
+          channel: nixpkgs-unstable
+          os: macos-latest
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:

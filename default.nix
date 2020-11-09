@@ -4,7 +4,11 @@ with pkgs;
 
 let
 
-  newScope = extra: lib.callPackageWith (pkgs // extra);
+  stdenvOverrides = lib.optionalAttrs stdenv.isDarwin {
+    stdenv = overrideInStdenv stdenv [ llvmPackages.openmp ];
+  };
+
+  newScope = extra: lib.callPackageWith (pkgs // stdenvOverrides // extra);
 
 in lib.makeScope newScope (self: with self; {
 
