@@ -36,11 +36,21 @@ jobs:
       env:
         SSH_KEY: '${{ secrets.SSH_KEY }}'
     - uses: cachix/install-nix-action@v12
+    - name: nix-instantiate
+      run: |
+        rev="$(git ls-remote https://github.com/NixOS/nixpkgs refs/heads/$channel | awk '{print $1}')"
+        nixpkgs="fetchTarball \"https://github.com/NixOS/nixpkgs/archive/$rev.tar.gz\""
+        nix-instantiate \
+            --show-trace \
+            --option allow-import-from-derivation false \
+            ${channel:+--arg pkgs "import ($nixpkgs) {}"}
+      env:
+        channel: '${{ matrix.channel }}'
     - uses: cachix/cachix-action@v8
       with:
         name: hmenke
         signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
-    - name: Run nix-build
+    - name: nix-build
       run: |
         rev="$(git ls-remote https://github.com/NixOS/nixpkgs refs/heads/$channel | awk '{print $1}')"
         nixpkgs="fetchTarball \"https://github.com/NixOS/nixpkgs/archive/$rev.tar.gz\""
@@ -84,20 +94,25 @@ jobs:
         install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20201221_9fab14a/install
         extra_nix_config: |
           experimental-features = nix-command flakes
+    - name: nix flake update
+      run: |
+        nix flake update \
+            --show-trace \
+            --option allow-import-from-derivation false \
+            --option pure-eval true \
+            ${channel:+--override-input nixpkgs github:NixOS/nixpkgs/$channel}
+      env:
+        channel: '${{ matrix.channel }}'
     - uses: cachix/cachix-action@v8
       with:
         name: hmenke
         signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
-    - name: Run nix flake check
+    - name: nix flake check
       run: |
         nix flake check \
             --print-build-logs \
             --show-trace \
             --option allow-import-from-derivation false \
-            --option pure-eval true \
-            ${channel:+--override-input nixpkgs github:NixOS/nixpkgs/$channel}
-        nix flake archive --json ${channel:+--override-input nixpkgs github:NixOS/nixpkgs/$channel} |
-            jq -r '.inputs[].path' |
-            xargs nix-store --delete
+            --option pure-eval true
       env:
         channel: '${{ matrix.channel }}'
