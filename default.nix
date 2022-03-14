@@ -14,7 +14,7 @@
 with pkgs;
 let
   stdenvOverrides = lib.optionalAttrs stdenv.isDarwin {
-    stdenv = overrideInStdenv stdenv [ llvmPackages.openmp ];
+    stdenv = overrideInStdenv clang13Stdenv [ llvmPackages.openmp ];
   };
   mpiOverride = lib.optionalAttrs (!pkgs ? mpi) { mpi = openmpi; };
   boostOverride = lib.optionalAttrs (lib.versionOlder boost.version "1.75.0") { boost = boost175; };
